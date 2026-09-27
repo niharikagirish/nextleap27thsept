@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Pre-push gate: run the test suite and the retrieval eval before anything leaves
+# the machine.
+#
+# This hook is version-controlled and activated by
+#   git config core.hooksPath scripts/git-hooks
+# rather than living in .git/hooks/, which is per-clone and invisible to git.
+# A hook nobody can review is a hook nobody trusts, and a hook that is not
+# committed is a hook the next clone silently does not have.
+#
+# CI (.github/workflows/ci.yml) runs the same two commands, so this is about
+# finding the problem at your desk with a fast edit-compile cycle rather than
+# after a round trip through GitHub.
+#
+# Bypass when you must, and only then:
+#   SKIP_PREPUSH=1 git push
+set -uo pipefail
+
+if [ "${SKIP_PREPUSH:-0}" = "1" ]; then
+    echo "pre-push: skipped (SKIP_PREPUSH=1)"
+    exit 0
+fi
+
+# Resolve the interpreter. Prefer the project venv, because a global python is
+# very unlikely to have torch and chromadb installed.
+if [ -x ".venv/Scripts/python.exe" ]; then
+    PY=".venv/Scripts/python.exe"
+elif [ -x ".venv/bin/python" ]; then
+    PY=".venv/bin/python"
+else
+    PY="${PYTHON:-python3}"
+fi
+
+echo "pre-push: using $PY"
+
+echo "pre-push: running test suite"
+if ! "$PY" -m pytest -q --no-header -p no:warnings; then
+    echo ""
+    echo "pre-push: REFUSING to push - tests failed."
+    echo "pre-push: fix, or push deliberately with SKIP_PREPUSH=1."
+    exit 1
+fi
+
+echo "pre-push: running retrieval gate"
+if ! "$PY" -m app.eval_retrieval --strict; then
+    echo ""
+    echo "pre-push: REFUSING to push - the retrieval gate failed."
+    echo "pre-push: push deliberately with SKIP_PREPUSH=1 if this is expected."
+    exit 1
+fi
+
+echo "pre-push: OK"
+exit 0

@@ -1,0 +1,73 @@
+name: CI
+
+# Runs on every push and every pull request. The suite is deliberately keyless:
+# no secret is passed in, and none is needed, because the pipeline falls back to
+# the retrieval-only echo backend. If a test ever starts requiring a live LLM
+# call, it would pass locally against a developer's .env and go red here - which
+# is exactly the failure this job exists to catch.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: tests and retrieval gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      # Must precede `pip install -r requirements.txt`. sentence-transformers
+      # depends on torch, so without this pip resolves the multi-GB CUDA wheel
+      # from PyPI and the job either times out or runs out of disk.
+      - name: Install CPU-only torch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      # chroma_db/ is gitignored, so the collection does not exist yet. Without
+      # this step the retrieval tests and the eval have no index to query.
+      - name: Build the retrieval index
+        run: python -m app.ingest --stage all --offline --reset
+
+      - name: Run the test suite
+        run: python -m pytest -q --no-header -p no:warnings
+
+      # The strict gate is what the retrieval claims in the README are worth.
+      # --strict makes a regression fail the build rather than print a report.
+      - name: Retrieval gate
+        run: python -m app.eval_retrieval --strict
+
+      - name: Fail if the committed corpus drifts from the evaluation
+        # The eval rewrites docs/retrieval_eval.md. If the committed copy differs,
+        # someone changed the corpus or the index without re-running and
+        # committing the report, so the numbers in the README may be stale.
+        run: |
+          if ! git diff --quiet -- docs/retrieval_eval.md; then
+            echo "::error::docs/retrieval_eval.md changed but was not committed."
+            echo "Run: python -m app.eval_retrieval --strict"
+            git --no-pager diff -- docs/retrieval_eval.md
+            exit 1
+          fi
