@@ -1,0 +1,11 @@
+# Normalize to LF in the repository and in the working tree.
+#
+# This matters most for scripts/render_build.sh: it is executed by bash on the
+# Linux deploy, and a CRLF line ending makes the shell try to run a command
+# named "<something>^M" and fail with an error that looks nothing like a line
+# ending problem. Pinning eol=lf here means a Windows checkout cannot break the
+# deploy.
+* text=auto eol=lf
+
+# Build outputs that must never be line-ending translated.
+artifacts/embeddings.json binary

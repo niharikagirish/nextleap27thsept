@@ -1,0 +1,24 @@
+# Streamlit server configuration.
+#
+# `address = "0.0.0.0"` is what makes the app reachable from outside the
+# container. Without it Streamlit binds to localhost and a deployed instance
+# refuses every connection, which looks identical to "the deploy is broken".
+
+[server]
+address = "0.0.0.0"
+headless = true
+port = 8501
+# Render terminates TLS at its proxy and forwards to the container over plain
+# HTTP, so the browser-facing origin is not the same as the server's origin.
+# Streamlit's cross-origin checks have to be relaxed for that to work.
+enableCORS = false
+maxUploadSize = 5
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#0f766e"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0fdfa"
+textColor = "#0f172a"

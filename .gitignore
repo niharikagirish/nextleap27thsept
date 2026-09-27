@@ -1,0 +1,31 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# virtualenv
+.venv/
+venv/
+
+# generated indexes and caches (rebuildable via `python -m app.ingest`)
+chroma_db/
+cache/
+
+# logs
+logs/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+
+# test / tooling caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/

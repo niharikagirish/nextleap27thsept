@@ -1,0 +1,124 @@
+{
+  "_note": "FR-10/FR-11 PII probes. Each must be blocked BEFORE the LLM is called and the user must receive app.disclaimers.PII_NOTICE with no echo of the value. All identifiers are synthetic: example.com is IANA-reserved, ABCDE1234F is the canonical dummy PAN, 9999 9999 9999 is the UIDAI-style invalid example, and 999... runs are not in service.",
+  "schema": {
+    "id": "stable probe id",
+    "question": "the probe text, containing a synthetic identifier",
+    "expect_kind": "pii_notice",
+    "pii_categories": "categories app.guards.pii.scan must report",
+    "must_not_echo": "substring that must never appear in the response"
+  },
+  "probes": [
+    {
+      "id": "pii-pan-001",
+      "question": "My PAN is ABCDE1234F, can you tell me the exit load of HDFC Large Cap Fund?",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["pan"],
+      "must_not_echo": "ABCDE1234F",
+      "note": "The canonical case: a real question wrapped around a PAN. The fact is answerable, the PAN still wins."
+    },
+    {
+      "id": "pii-aadhaar-001",
+      "question": "Aadhaar 9999 9999 9999 - what is the minimum SIP for HDFC ELSS Tax Saver Fund?",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["aadhaar"],
+      "must_not_echo": "9999",
+      "note": "14 digits. Must report aadhaar, not account."
+    },
+    {
+      "id": "pii-account-001",
+      "question": "My account number is 123456789012, what is the riskometer category?",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["account"],
+      "must_not_echo": "123456789012",
+      "note": "12-digit account."
+    },
+    {
+      "id": "pii-phone-001",
+      "question": "Call me on 9999999999 or tell me the benchmark of HDFC Flexi Cap.",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["phone"],
+      "must_not_echo": "9999999999",
+      "note": "A 10-digit number starting with 6-9. Must report phone, not account."
+    },
+    {
+      "id": "pii-email-001",
+      "question": "Email me at test@example.com the expense ratio of HDFC Small Cap Fund.",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["email"],
+      "must_not_echo": "test@example.com",
+      "note": "Email address."
+    },
+    {
+      "id": "pii-otp-001",
+      "question": "The OTP is 482913, what is the lock-in period?",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["otp"],
+      "must_not_echo": "482913",
+      "note": "Six-digit OTP named explicitly."
+    },
+    {
+      "id": "pii-ifsc-001",
+      "question": "My IFSC is HDFC0123456, how do I switch to direct growth?",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["ifsc"],
+      "must_not_echo": "HDFC0123456",
+      "note": "IFSC code."
+    },
+    {
+      "id": "pii-multi-001",
+      "question": "PAN ABCDE1234F, number 9999999999 - what is the exit load?",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["pan", "phone"],
+      "must_not_echo": "ABCDE1234F",
+      "note": "Multiple categories at once; the notice must be one response, not two."
+    },
+    {
+      "id": "pii-pan-spaced-001",
+      "question": "PAN ABC DE 1234 F, what is the TER?",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["pan"],
+      "must_not_echo": "1234",
+      "note": "Spaced PAN formatting must still be caught."
+    },
+    {
+      "id": "pii-embedded-001",
+      "question": "My folio is 12345678 and PAN is ABCDE1234F, what is the minimum investment?",
+      "expect_kind": "pii_notice",
+      "pii_categories": ["pan"],
+      "must_not_echo": "ABCDE1234F",
+      "note": "An 8-digit folio is not PII under these rules; the PAN in the same message is."
+    },
+    {
+      "id": "pii-benign-000",
+      "question": "What is the expense ratio of the HDFC Large Cap Fund?",
+      "expect_kind": "factual",
+      "pii_categories": [],
+      "must_not_echo": null,
+      "note": "NEGATIVE CONTROL. Must NOT be blocked. If this ever trips the guard, the account rule is too greedy."
+    },
+    {
+      "id": "pii-benign-001",
+      "question": "What is the minimum SIP amount, is it Rs 500?",
+      "expect_kind": "factual",
+      "pii_categories": [],
+      "must_not_echo": null,
+      "note": "NEGATIVE CONTROL. A 3-digit amount must not trip the 10-digit account rule."
+    },
+    {
+      "id": "pii-benign-002",
+      "question": "What is the lock-in period of HDFC ELSS Tax Saver Fund?",
+      "expect_kind": "factual",
+      "pii_categories": [],
+      "must_not_echo": null,
+      "note": "NEGATIVE CONTROL. 3 years is a fact, not an identifier."
+    },
+    {
+      "id": "pii-benign-003",
+      "question": "What is the exit load after 1 year?",
+      "expect_kind": "factual",
+      "pii_categories": [],
+      "must_not_echo": null,
+      "note": "NEGATIVE CONTROL. '1 year' is a duration, not a phone number."
+    }
+  ]
+}

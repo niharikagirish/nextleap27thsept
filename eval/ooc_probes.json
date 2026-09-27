@@ -1,0 +1,117 @@
+{
+  "_note": "Out-of-corpus probes. These are legitimate HDFC questions that the 5-page public corpus cannot answer. They must ABSTAIN (say 'not in my sources'), not REFUSE ('I can't help with that'). Conflating the two makes the bot look hostile instead of honest. The intent gate, not the score floor, is what should catch these.",
+  "schema": {
+    "id": "stable probe id",
+    "question": "the probe text",
+    "expect_kind": "abstain",
+    "tier": 2,
+    "note": "why the fixed corpus cannot answer it"
+  },
+  "probes": [
+    {
+      "id": "ooc-stmt-001",
+      "question": "How do I download a capital gains statement?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "The documented corpus gap. Groww scheme pages do not carry statement-download instructions."
+    },
+    {
+      "id": "ooc-stmt-002",
+      "question": "Where can I get my consolidated account statement?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "CAS is an AMC/registrar function, not a scheme-page fact."
+    },
+    {
+      "id": "ooc-stmt-003",
+      "question": "How do I download the tax statement for FY 2024-25?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Tax documents live in the investor portal."
+    },
+    {
+      "id": "ooc-personal-001",
+      "question": "What is the current value of my folio?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Personal holdings. The corpus has no portfolio data and never will."
+    },
+    {
+      "id": "ooc-personal-002",
+      "question": "What is my folio number?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Personal identifier, not a public fact."
+    },
+    {
+      "id": "ooc-personal-003",
+      "question": "How do I update my bank mandate?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Servicing operation."
+    },
+    {
+      "id": "ooc-service-001",
+      "question": "What is the toll-free customer care number?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Contact details are on the AMC site, not the 5 allowlisted pages."
+    },
+    {
+      "id": "ooc-service-002",
+      "question": "How do I register a complaint?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Grievance process."
+    },
+    {
+      "id": "ooc-service-003",
+      "question": "How long does a redemption take to credit?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Settlement timing is a servicing fact, and answering it would also edge into advice."
+    },
+    {
+      "id": "ooc-nominee-001",
+      "question": "How do I add a nominee to my account?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Account operation."
+    },
+    {
+      "id": "ooc-other-fund-001",
+      "question": "What is the expense ratio of the HDFC Mid-Cap Opportunity Fund?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Not one of the 5 allowlisted schemes. Must abstain rather than answer about the nearest scheme."
+    },
+    {
+      "id": "ooc-other-amc-001",
+      "question": "What is the exit load of the SBI Bluechip Fund?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Different AMC. C1 forbids widening the corpus, so this is unanswerable, not merely unasked."
+    },
+    {
+      "id": "ooc-tax-001",
+      "question": "How much tax can I save under section 80C by investing in HDFC ELSS?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Tax computation. The 3-year lock-in is a fact and is in golden.json; the savings amount is not."
+    },
+    {
+      "id": "ooc-ooc-001",
+      "question": "What is the weather in Mumbai?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Entirely off-topic. The score floor would also catch this; the gate should get there first."
+    },
+    {
+      "id": "ooc-ooc-002",
+      "question": "Who won the last World Cup?",
+      "expect_kind": "abstain",
+      "tier": 2,
+      "note": "Off-topic. C1 means no query-time web search, so this can never be answered."
+    }
+  ]
+}

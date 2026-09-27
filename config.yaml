@@ -1,0 +1,101 @@
+# All tunables. Secrets are NEVER here — they come from environment variables
+# via .env (see .env.example), so this file is safe to commit and to show on
+# screen during a demo.
+
+corpus:
+  collection_name: hdfc_faq
+  # The 5 source URLs live in app/sources.py as CODE, not here, so the corpus
+  # cannot be widened at runtime (constraint C1).
+
+loading:
+  timeout_s: 10
+  retries: 2
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  raw_docs_path: artifacts/raw_docs.jsonl
+  sources_csv_path: data/sources.csv
+  min_extracted_chars: 200
+  exclude_performance_content: true
+
+chunking:
+  # strategy/chunk_size/chunk_overlap were chosen by `python -m app.experiment`
+  # (FR-05) over a 45-cell grid; the full table is in
+  # docs/chunking_experiment.md and the numbers are reproduced in
+  # docs/retrieval_eval.md.
+  #
+  # GATE 2 JUSTIFICATION:
+  #   The sweep scored Recall@5 against the 20 hand-labelled questions in
+  #   eval/golden.json, and recursive/600/60 reached 1.000 while producing 146
+  #   chunks with a 0.63 p95 word-piece length, comfortably inside the 256
+  #   cap. The decisive result was not the recall score but the chunk-size
+  #   floor: heading_bound at 400 characters emitted 12 chunks under 100
+  #   characters - markdown table-row fragments such as "09% |" - and those
+  #   fragments outranked the chunk that actually held the answer, which cost
+  #   q19 its only golden miss (19/20). At 600/60 the smallest chunk is over
+  #   100 characters, the same 20 questions return 20/20, and
+  #   tests/test_chunker.py::test_no_degenerate_fragment_chunks keeps it that
+  #   way.
+  #   legal values: recursive | heading_bound | semantic
+  strategy: recursive
+  chunk_size: 600
+  chunk_overlap: 60  # 10% of chunk_size, chosen by app/experiment.py
+  # NOT tuning knobs. all-MiniLM-L6-v2 has a hard 256 word-piece input limit and
+  # truncates SILENTLY, so a longer chunk embeds only its first half while the
+  # stored text still shows the whole passage — it then retrieves on the wrong
+  # half. max_wordpieces is the hard ceiling, asserted in
+  # tests/test_chunker.py::test_every_chunk_fits_the_wordpiece_cap; target leaves
+  # headroom for the heading-trail prefix that is prepended at embed time.
+  max_wordpieces: 256
+  target_wordpieces: 200
+  prepend_heading_trail: true
+  clean_chunks_path: artifacts/clean_chunks.jsonl
+
+embedding:
+  # Fixed by the class brief. 384-dim; do not change without re-running the
+  # Phase 2 experiment, because a different model invalidates the whole index
+  # and every cached vector (the cache key includes the model id).
+  model_id: sentence-transformers/all-MiniLM-L6-v2
+  device: cpu
+  batch_size: 32
+  normalize: true
+  # Content-keyed: cache/embeddings/{sha256(model_id + "::" + content_hash)}.npy
+  cache_dir: cache/embeddings
+  # Stage handoff so `--stage store` never has to load the model.
+  vectors_path: artifacts/embeddings.json
+
+retrieval:
+  n_results: 12
+  top_k: 6
+  score_floor: 0.35
+  dedupe_jaccard: 0.9
+  max_context_tokens: 2000
+  rerank:
+    enabled: false
+    model_id: cross-encoder/ms-marco-MiniLM-L-6-v2
+    top_n: 20
+
+generation:
+  temperature: 0.0
+  max_tokens: 250
+  max_sentences: 3
+  provider: env
+  model: null
+  api_key_env: LLM_API_KEY
+
+guards:
+  pii_enabled: true
+  intent_enabled: true
+  injection_enabled: true
+  performance_guard: true
+
+freshness:
+  # C7. If the *cited* pages are older than this, the answer keeps at most
+  # MAX_SENTENCES-1 sentences of body and spends the last one on
+  # disclaimers.FRESHNESS_CAVEAT. Exit loads and expense ratios do change, so a
+  # stale page is a real accuracy problem, not a cosmetic one.
+  max_age_days: 30
+  # Answers always carry Answer.last_updated regardless; this only controls the
+  # extra in-band caveat.
+  caveat_when_stale: true
+
+ui:
+  debug_default: false

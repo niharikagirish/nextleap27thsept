@@ -1,0 +1,26 @@
+# HDFC Mutual Fund FAQ RAG Chatbot — Stage 1 (Loading) and shared contracts.
+# Target: Python 3.11. CPU only. No paid API key required for the ingest path.
+
+# --- core -------------------------------------------------------------------
+httpx==0.27.2
+trafilatura==1.12.0
+beautifulsoup4==4.12.3
+lxml==5.3.0
+PyYAML==6.0.2
+python-dotenv==1.0.1
+
+# --- chunking / retrieval (Phases 2-4) ---------------------------------------
+chromadb==0.5.23
+sentence-transformers==3.3.1
+numpy==2.1.3
+
+# --- optional fact PDF source (future, not used in v1) ----------------------
+pypdf==5.1.0
+
+# --- UI + eval (Phases 7-8) -------------------------------------------------
+streamlit==1.40.2
+pytest==8.3.4
+
+# NOTE: install torch separately with the CPU-only wheel, otherwise the default
+# PyPI wheel drags in multi-GB CUDA dependencies and breaches the NFR-06 budget:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu

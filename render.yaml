@@ -1,0 +1,45 @@
+# Render Blueprint for the HDFC MF FAQ assistant.
+#
+# The three settings the Render dashboard asks for map to:
+#   Root Directory  -> rootDir below (empty = repository root)
+#   Build Command   -> buildCommand below
+#   Start Command   -> startCommand below
+#
+# Deploying with this file instead of the dashboard means the service is
+# reproducible from the repository: the exact build a reviewer gets is the build
+# in version control.
+#
+# NOTE: `GROQ_API_KEY` is declared with `sync: false`, so Render prompts for the
+# value and stores it as a secret. It is deliberately absent from the repository
+# and from .env.example. If you skip it the app still deploys and still works -
+# it falls back to the retrieval-only `echo` backend and says so in the UI - but
+# you get retrieved passages and scores instead of generated answers.
+
+services:
+  - type: web
+    name: hdfc-mf-faq-assistant
+    runtime: python
+    # The free plan caps at 512 MB RAM. Torch plus the MiniLM model plus chromadb
+    # is tight against that ceiling, and the OOM shows up as a random crash
+    # rather than a clean error. Starter is the reliable choice.
+    plan: starter
+
+    # --- the three answers ------------------------------------------------ #
+    rootDir: ""            # repository root
+    buildCommand: bash scripts/render_build.sh
+    startCommand: streamlit run app/ui.py --server.address 0.0.0.0 --server.port $PORT
+    # ---------------------------------------------------------------------- #
+
+    healthCheckPath: /_stcore/health
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: GROQ_API_KEY
+        sync: false
+      # A per-service random salt, so q_hash values cannot be correlated across
+      # deployments or brute-forced back into questions.
+      - key: LOG_HASH_SALT
+        generateValue: true
+      - key: LOG_LEVEL
+        value: INFO

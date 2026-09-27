@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Build the retrieval index from the committed artifacts.
+#
+# Why this exists as a build step: `chroma_db/` and `cache/` are gitignored, so a
+# fresh clone has no index at all. Without this step the deployed app starts,
+# loads, and then answers every question with "the retrieval index is empty".
+#
+# `--offline` replays the committed `artifacts/raw_docs.jsonl` instead of
+# re-fetching the five Groww pages. That makes the build deterministic and
+# hermetic: a Groww redesign, an outage, or a rate limit cannot produce a
+# different index on the server than the one the retrieval report was measured
+# against. To deliberately re-scrape, run `python -m app.ingest --stage all`
+# (no --offline) and commit the refreshed artifacts.
+#
+# Cold build is ~30 s of compute plus the one-time ~90 MB model download.
+set -euo pipefail
+
+echo "==> Installing CPU-only torch first"
+# The default PyPI torch wheel drags in multi-GB CUDA dependencies, which
+# breaches the size budget and can exhaust a Render build's memory. Installing
+# from the CPU index first means pip never resolves the CUDA extra.
+pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+echo "==> Installing project requirements"
+pip install --no-cache-dir -r requirements.txt
+
+echo "==> Building the retrieval index (offline replay, no network)"
+python -m app.ingest --stage all --offline
+
+echo "==> Pre-warming the embedding model into the image"
+# Pulls all-MiniLM-L6-v2 into the build image so the first user request does not
+# pay the download.
+python -c "from app.embedder_singleton import get_model; get_model()"
+
+echo "==> Verifying the index is queryable"
+python - <<'PY'
+from app.pipeline.store import count
+n = count()
+assert n > 0, "index is empty - the build did not produce a usable corpus"
+print(f"index ready: {n} chunks")
+PY
+
+echo "==> Build complete"
