@@ -49,3 +49,10 @@ services:
         generateValue: true
       - key: LOG_LEVEL
         value: INFO
+      # chromadb's own telemetry, not the app's. Two reasons to turn it off: the
+      # pinned chromadb/posthog pair emits "capture() takes 1 positional
+      # argument but 3 were given" on every client call, which buries real
+      # errors in build and runtime logs; and a public demo has no business
+      # reporting usage off someone's infrastructure.
+      - key: ANONYMIZED_TELEMETRY
+        value: "False"
