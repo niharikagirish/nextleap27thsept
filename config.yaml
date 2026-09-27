@@ -25,7 +25,7 @@ chunking:
   # GATE 2 JUSTIFICATION:
   #   The sweep scored Recall@5 against the 20 hand-labelled questions in
   #   eval/golden.json, and recursive/600/60 reached 1.000 while producing 146
-  #   chunks with a 0.63 p95 word-piece length, comfortably inside the 256
+  #   chunks with a 218 p95 word-piece length, comfortably inside the 256
   #   cap. The decisive result was not the recall score but the chunk-size
   #   floor: heading_bound at 400 characters emitted 12 chunks under 100
   #   characters - markdown table-row fragments such as "09% |" - and those
