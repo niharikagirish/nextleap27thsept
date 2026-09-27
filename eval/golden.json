@@ -1,240 +1,276 @@
 {
-    "_meta":  {
-                  "purpose":  "Hand-labelled retrieval gold set for the chunking experiment (FR-05) and the Phase 8 end-to-end eval. 20 questions, 4 per scheme, spanning the 7 fact types the brief requires.",
-                  "authoring":  "Written by hand from the live page data captured 2026-09-27, not from a model. Every `answer_span` is a VERBATIM substring of the Stage 1 corpus text for that source_id, so `span in chunk.text` is a real check, not an approximation.",
-                  "answer_span_rule":  "A 60-110 character VERBATIM excerpt copied from the rendered \u0027## Scheme facts\u0027 block, so that \u0027answer_span in chunk.text\u0027 is a real substring test and not a paraphrase match. Kept short deliberately: a long span would be satisfied by a chunk that happens to contain a whole facts block, and would not discriminate between chunk sizes.",
-                  "must_include_rule":  "The one fact that makes the answer correct - typically a numeral. Used by the Phase 8 answer checker, not by Recall@5 (which only uses answer_span).",
-                  "field_names":  "Matches implementation.md 2.D: id / question / expected_url / expected_source_id / must_include / answer_span.",
-                  "fact_types_requested":  "expense ratio, exit load, minimum SIP, lock-in (ELSS), riskometer, benchmark, how to download statements",
-                  "fact_types_present":  "expense_ratio, exit_load, minimum_sip, minimum_lumpsum, lock_in, riskometer, benchmark",
-                  "notes":  [
-                                "HOW TO DOWNLOAD STATEMENTS IS MISSING BY DESIGN. implementation.md 2.A.5 lists it as one of the 7 required fact types, but it does not exist in the corpus: none of the five pages contains a statements guide, sid_url resolves to the AMC homepage (https://www.hdfcfund.com) for all five schemes, and brochure_link is null everywhere. Per the instruction \u0027If a fact type is genuinely absent from a page, use a different fact type for that scheme and note it in a notes field\u0027, minimum_lumpsum was substituted. Labelling it anyway would have forced a gold chunk that does not exist and taught the experiment to reward retrieving the wrong passage. See docs/known_limits.md section 1.",
-                                "LOCK-IN IS ELSS-ONLY BY NATURE. Three of the four non-ELSS schemes state \u0027Lock-in period: none.\u0027, which is still a real, answerable fact, so q04 is labelled against that explicit statement rather than omitted.",
-                                "BENCHMARK COVERS ONE SCHEME ONLY. All five pages carry a benchmark, but a 4-per-scheme budget with 7 fact types does not allow it to be labelled five times; q19 covers the Balanced Advantage benchmark, whose string is the most distinctive (NIFTY 50 Hybrid Composite Debt 50:50 Index) and the hardest for retrieval to confuse with the NIFTY 500 TRI used by two other schemes.",
-                                "NO \u0027minimum_lumpsum\u0027 FACT TYPE WAS REQUESTED. It appears here because the brief\u0027s SIP question and the corpus\u0027s own \u0027Minimum lump sum investment\u0027 line are different facts, and lump sum is one of the three ways the pages say to invest."
-                            ]
-              },
-    "questions":  [
-                      {
-                          "id":  "q01",
-                          "question":  "What is the expense ratio of the HDFC Large Cap Fund?",
-                          "fact_type":  "expense_ratio",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
-                          "expected_source_id":  "hdfc-large-cap",
-                          "must_include":  [
-                                               "1.03"
-                                           ],
-                          "answer_span":  "Expense ratio of HDFC Large Cap Fund Direct Growth is 1.03% (base expense ratio 0.84%)"
-                      },
-                      {
-                          "id":  "q02",
-                          "question":  "Is there an exit load on the HDFC Large Cap Fund?",
-                          "fact_type":  "exit_load",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
-                          "expected_source_id":  "hdfc-large-cap",
-                          "must_include":  [
-                                               "1%"
-                                           ],
-                          "answer_span":  "Exit load of HDFC Large Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year."
-                      },
-                      {
-                          "id":  "q03",
-                          "question":  "What is the minimum SIP amount for the HDFC Large Cap Fund?",
-                          "fact_type":  "minimum_sip",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
-                          "expected_source_id":  "hdfc-large-cap",
-                          "must_include":  [
-                                               "Rs 100"
-                                           ],
-                          "answer_span":  "Minimum SIP amount for HDFC Large Cap Fund Direct Growth is Rs 100 per month"
-                      },
-                      {
-                          "id":  "q04",
-                          "question":  "What is the lock-in period on the HDFC Large Cap Fund?",
-                          "fact_type":  "lock_in",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
-                          "expected_source_id":  "hdfc-large-cap",
-                          "must_include":  [
-                                               "none"
-                                           ],
-                          "answer_span":  "Lock-in period for HDFC Large Cap Fund Direct Growth: none."
-                      },
-                      {
-                          "id":  "q05",
-                          "question":  "What is the expense ratio of the HDFC Flexi Cap Fund?",
-                          "fact_type":  "expense_ratio",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth",
-                          "expected_source_id":  "hdfc-equity",
-                          "must_include":  [
-                                               "0.77"
-                                           ],
-                          "answer_span":  "Expense ratio of HDFC Flexi Cap Direct Plan Growth is 0.77% (base expense ratio 0.57%)"
-                      },
-                      {
-                          "id":  "q06",
-                          "question":  "What is the exit load for the HDFC Flexi Cap Fund?",
-                          "fact_type":  "exit_load",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth",
-                          "expected_source_id":  "hdfc-equity",
-                          "must_include":  [
-                                               "1%"
-                                           ],
-                          "answer_span":  "Exit load of HDFC Flexi Cap Direct Plan Growth: Exit load of 1% if redeemed within 1 year."
-                      },
-                      {
-                          "id":  "q07",
-                          "question":  "How much do I need to invest as a lump sum in the HDFC Flexi Cap Fund?",
-                          "fact_type":  "minimum_lumpsum",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth",
-                          "expected_source_id":  "hdfc-equity",
-                          "must_include":  [
-                                               "Rs 100"
-                                           ],
-                          "answer_span":  "Minimum lump sum investment for HDFC Flexi Cap Direct Plan Growth is Rs 100."
-                      },
-                      {
-                          "id":  "q08",
-                          "question":  "What is the riskometer of the HDFC Flexi Cap Fund?",
-                          "fact_type":  "riskometer",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth",
-                          "expected_source_id":  "hdfc-equity",
-                          "must_include":  [
-                                               "Moderately High"
-                                           ],
-                          "answer_span":  "Riskometer for HDFC Flexi Cap Direct Plan Growth: Moderately High."
-                      },
-                      {
-                          "id":  "q09",
-                          "question":  "What is the expense ratio of the HDFC ELSS Tax Saver Fund?",
-                          "fact_type":  "expense_ratio",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
-                          "expected_source_id":  "hdfc-elss",
-                          "must_include":  [
-                                               "1.21"
-                                           ],
-                          "answer_span":  "Expense ratio of HDFC ELSS Tax Saver Fund Direct Plan Growth is 1.21%"
-                      },
-                      {
-                          "id":  "q10",
-                          "question":  "Does the HDFC ELSS Tax Saver Fund have a lock-in period?",
-                          "fact_type":  "lock_in",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
-                          "expected_source_id":  "hdfc-elss",
-                          "must_include":  [
-                                               "3 years"
-                                           ],
-                          "answer_span":  "Lock-in period for HDFC ELSS Tax Saver Fund Direct Plan Growth: 3 years."
-                      },
-                      {
-                          "id":  "q11",
-                          "question":  "What is the minimum SIP for the HDFC ELSS Tax Saver Fund?",
-                          "fact_type":  "minimum_sip",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
-                          "expected_source_id":  "hdfc-elss",
-                          "must_include":  [
-                                               "Rs 500"
-                                           ],
-                          "answer_span":  "Minimum SIP amount for HDFC ELSS Tax Saver Fund Direct Plan Growth is Rs 500 per month"
-                      },
-                      {
-                          "id":  "q12",
-                          "question":  "Is there any exit load on the HDFC ELSS Tax Saver Fund?",
-                          "fact_type":  "exit_load",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
-                          "expected_source_id":  "hdfc-elss",
-                          "must_include":  [
-                                               "Nil"
-                                           ],
-                          "answer_span":  "Exit load of HDFC ELSS Tax Saver Fund Direct Plan Growth: Nil."
-                      },
-                      {
-                          "id":  "q13",
-                          "question":  "What is the expense ratio of the HDFC Small Cap Fund?",
-                          "fact_type":  "expense_ratio",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
-                          "expected_source_id":  "hdfc-small-cap",
-                          "must_include":  [
-                                               "0.78"
-                                           ],
-                          "answer_span":  "Expense ratio of HDFC Small Cap Fund Direct Growth is 0.78% (base expense ratio 0.63%)"
-                      },
-                      {
-                          "id":  "q14",
-                          "question":  "What is the minimum SIP amount for the HDFC Small Cap Fund?",
-                          "fact_type":  "minimum_sip",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
-                          "expected_source_id":  "hdfc-small-cap",
-                          "must_include":  [
-                                               "Rs 100"
-                                           ],
-                          "answer_span":  "Minimum SIP amount for HDFC Small Cap Fund Direct Growth is Rs 100 per month"
-                      },
-                      {
-                          "id":  "q15",
-                          "question":  "What is the exit load of the HDFC Small Cap Fund?",
-                          "fact_type":  "exit_load",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
-                          "expected_source_id":  "hdfc-small-cap",
-                          "must_include":  [
-                                               "1%"
-                                           ],
-                          "answer_span":  "Exit load of HDFC Small Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year."
-                      },
-                      {
-                          "id":  "q16",
-                          "question":  "What is the riskometer level of the HDFC Small Cap Fund?",
-                          "fact_type":  "riskometer",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
-                          "expected_source_id":  "hdfc-small-cap",
-                          "must_include":  [
-                                               "Moderately High"
-                                           ],
-                          "answer_span":  "Riskometer for HDFC Small Cap Fund Direct Growth: Moderately High."
-                      },
-                      {
-                          "id":  "q17",
-                          "question":  "What is the expense ratio of the HDFC Balanced Advantage Fund?",
-                          "fact_type":  "expense_ratio",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
-                          "expected_source_id":  "hdfc-balanced-adv",
-                          "must_include":  [
-                                               "0.78"
-                                           ],
-                          "answer_span":  "Expense ratio of HDFC Balanced Advantage Fund Direct Growth is 0.78% (base expense ratio 0.64%)"
-                      },
-                      {
-                          "id":  "q18",
-                          "question":  "What is the exit load structure of the HDFC Balanced Advantage Fund?",
-                          "fact_type":  "exit_load",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
-                          "expected_source_id":  "hdfc-balanced-adv",
-                          "must_include":  [
-                                               "15%",
-                                               "1%"
-                                           ],
-                          "answer_span":  "Exit Load for units in excess of 15% of the investment,1% will be charged for redemption within 1 year."
-                      },
-                      {
-                          "id":  "q19",
-                          "question":  "What benchmark does the HDFC Balanced Advantage Fund track?",
-                          "fact_type":  "benchmark",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
-                          "expected_source_id":  "hdfc-balanced-adv",
-                          "must_include":  [
-                                               "NIFTY 50 Hybrid Composite"
-                                           ],
-                          "answer_span":  "Benchmark for HDFC Balanced Advantage Fund Direct Growth: NIFTY 50 Hybrid Composite Debt 50:50 Index."
-                      },
-                      {
-                          "id":  "q20",
-                          "question":  "What is the minimum lump sum for the HDFC Balanced Advantage Fund?",
-                          "fact_type":  "minimum_lumpsum",
-                          "expected_url":  "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
-                          "expected_source_id":  "hdfc-balanced-adv",
-                          "must_include":  [
-                                               "Rs 100"
-                                           ],
-                          "answer_span":  "Minimum lump sum investment for HDFC Balanced Advantage Fund Direct Growth is Rs 100."
-                      }
-                  ]
+  "_meta": {
+    "purpose": "Hand-labelled retrieval gold set for the chunking experiment (FR-05) and the Phase 8 end-to-end eval. 23 questions, 4 per scheme plus 3 added for the fund_manager regression, spanning the 7 fact types the brief requires.",
+    "authoring": "Written by hand from the live page data captured 2026-09-27, not from a model. Every `answer_span` is a VERBATIM substring of the Stage 1 corpus text for that source_id, so `span in chunk.text` is a real check, not an approximation.",
+    "answer_span_rule": "A 60-110 character VERBATIM excerpt copied from the rendered '## Scheme facts' block, so that 'answer_span in chunk.text' is a real substring test and not a paraphrase match. Kept short deliberately: a long span would be satisfied by a chunk that happens to contain a whole facts block, and would not discriminate between chunk sizes.",
+    "must_include_rule": "The one fact that makes the answer correct - typically a numeral. Used by the Phase 8 answer checker, not by Recall@5 (which only uses answer_span).",
+    "field_names": "Matches implementation.md 2.D: id / question / expected_url / expected_source_id / must_include / answer_span.",
+    "fact_types_requested": "expense ratio, exit load, minimum SIP, lock-in (ELSS), riskometer, benchmark, how to download statements",
+    "fact_types_present": "expense_ratio, exit_load, minimum_sip, minimum_lumpsum, lock_in, riskometer, benchmark, fund_manager",
+    "notes": [
+      "HOW TO DOWNLOAD STATEMENTS IS MISSING BY DESIGN. implementation.md 2.A.5 lists it as one of the 7 required fact types, but it does not exist in the corpus: none of the five pages contains a statements guide, sid_url resolves to the AMC homepage (https://www.hdfcfund.com) for all five schemes, and brochure_link is null everywhere. Per the instruction 'If a fact type is genuinely absent from a page, use a different fact type for that scheme and note it in a notes field', minimum_lumpsum was substituted. Labelling it anyway would have forced a gold chunk that does not exist and taught the experiment to reward retrieving the wrong passage. See docs/known_limits.md section 1.",
+      "LOCK-IN IS ELSS-ONLY BY NATURE. Three of the four non-ELSS schemes state 'Lock-in period: none.', which is still a real, answerable fact, so q04 is labelled against that explicit statement rather than omitted.",
+      "BENCHMARK COVERS ONE SCHEME ONLY. All five pages carry a benchmark, but a 4-per-scheme budget with 7 fact types does not allow it to be labelled five times; q19 covers the Balanced Advantage benchmark, whose string is the most distinctive (NIFTY 50 Hybrid Composite Debt 50:50 Index) and the hardest for retrieval to confuse with the NIFTY 500 TRI used by two other schemes.",
+      "NO 'minimum_lumpsum' FACT TYPE WAS REQUESTED. It appears here because the brief's SIP question and the corpus's own 'Minimum lump sum investment' line are different facts, and lump sum is one of the three ways the pages say to invest.",
+      "FUND_MANAGER QUESTIONS ADDED 2026-09-27 AFTER THE STALE-SCALAR FIX. q21-q23 assert the full roster from fund_manager_details, not the single stale name in mfServerSideData..fund_manager. q21 covers a 2-person roster, q23 a 6-person one, and q22 uses a question phrasing that does not contain the word manager as a token match, so it also exercises scheme detection for the ELSS page."
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "question": "What is the expense ratio of the HDFC Large Cap Fund?",
+      "fact_type": "expense_ratio",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-large-cap",
+      "must_include": [
+        "1.03"
+      ],
+      "answer_span": "Expense ratio of HDFC Large Cap Fund Direct Growth is 1.03% (base expense ratio 0.84%)"
+    },
+    {
+      "id": "q02",
+      "question": "Is there an exit load on the HDFC Large Cap Fund?",
+      "fact_type": "exit_load",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-large-cap",
+      "must_include": [
+        "1%"
+      ],
+      "answer_span": "Exit load of HDFC Large Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year."
+    },
+    {
+      "id": "q03",
+      "question": "What is the minimum SIP amount for the HDFC Large Cap Fund?",
+      "fact_type": "minimum_sip",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-large-cap",
+      "must_include": [
+        "Rs 100"
+      ],
+      "answer_span": "Minimum SIP amount for HDFC Large Cap Fund Direct Growth is Rs 100 per month"
+    },
+    {
+      "id": "q04",
+      "question": "What is the lock-in period on the HDFC Large Cap Fund?",
+      "fact_type": "lock_in",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-large-cap",
+      "must_include": [
+        "none"
+      ],
+      "answer_span": "Lock-in period for HDFC Large Cap Fund Direct Growth: none."
+    },
+    {
+      "id": "q05",
+      "question": "What is the expense ratio of the HDFC Flexi Cap Fund?",
+      "fact_type": "expense_ratio",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth",
+      "expected_source_id": "hdfc-equity",
+      "must_include": [
+        "0.77"
+      ],
+      "answer_span": "Expense ratio of HDFC Flexi Cap Direct Plan Growth is 0.77% (base expense ratio 0.57%)"
+    },
+    {
+      "id": "q06",
+      "question": "What is the exit load for the HDFC Flexi Cap Fund?",
+      "fact_type": "exit_load",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth",
+      "expected_source_id": "hdfc-equity",
+      "must_include": [
+        "1%"
+      ],
+      "answer_span": "Exit load of HDFC Flexi Cap Direct Plan Growth: Exit load of 1% if redeemed within 1 year."
+    },
+    {
+      "id": "q07",
+      "question": "How much do I need to invest as a lump sum in the HDFC Flexi Cap Fund?",
+      "fact_type": "minimum_lumpsum",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth",
+      "expected_source_id": "hdfc-equity",
+      "must_include": [
+        "Rs 100"
+      ],
+      "answer_span": "Minimum lump sum investment for HDFC Flexi Cap Direct Plan Growth is Rs 100."
+    },
+    {
+      "id": "q08",
+      "question": "What is the riskometer of the HDFC Flexi Cap Fund?",
+      "fact_type": "riskometer",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth",
+      "expected_source_id": "hdfc-equity",
+      "must_include": [
+        "Moderately High"
+      ],
+      "answer_span": "Riskometer for HDFC Flexi Cap Direct Plan Growth: Moderately High."
+    },
+    {
+      "id": "q09",
+      "question": "What is the expense ratio of the HDFC ELSS Tax Saver Fund?",
+      "fact_type": "expense_ratio",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+      "expected_source_id": "hdfc-elss",
+      "must_include": [
+        "1.21"
+      ],
+      "answer_span": "Expense ratio of HDFC ELSS Tax Saver Fund Direct Plan Growth is 1.21%"
+    },
+    {
+      "id": "q10",
+      "question": "Does the HDFC ELSS Tax Saver Fund have a lock-in period?",
+      "fact_type": "lock_in",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+      "expected_source_id": "hdfc-elss",
+      "must_include": [
+        "3 years"
+      ],
+      "answer_span": "Lock-in period for HDFC ELSS Tax Saver Fund Direct Plan Growth: 3 years."
+    },
+    {
+      "id": "q11",
+      "question": "What is the minimum SIP for the HDFC ELSS Tax Saver Fund?",
+      "fact_type": "minimum_sip",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+      "expected_source_id": "hdfc-elss",
+      "must_include": [
+        "Rs 500"
+      ],
+      "answer_span": "Minimum SIP amount for HDFC ELSS Tax Saver Fund Direct Plan Growth is Rs 500 per month"
+    },
+    {
+      "id": "q12",
+      "question": "Is there any exit load on the HDFC ELSS Tax Saver Fund?",
+      "fact_type": "exit_load",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+      "expected_source_id": "hdfc-elss",
+      "must_include": [
+        "Nil"
+      ],
+      "answer_span": "Exit load of HDFC ELSS Tax Saver Fund Direct Plan Growth: Nil."
+    },
+    {
+      "id": "q13",
+      "question": "What is the expense ratio of the HDFC Small Cap Fund?",
+      "fact_type": "expense_ratio",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-small-cap",
+      "must_include": [
+        "0.78"
+      ],
+      "answer_span": "Expense ratio of HDFC Small Cap Fund Direct Growth is 0.78% (base expense ratio 0.63%)"
+    },
+    {
+      "id": "q14",
+      "question": "What is the minimum SIP amount for the HDFC Small Cap Fund?",
+      "fact_type": "minimum_sip",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-small-cap",
+      "must_include": [
+        "Rs 100"
+      ],
+      "answer_span": "Minimum SIP amount for HDFC Small Cap Fund Direct Growth is Rs 100 per month"
+    },
+    {
+      "id": "q15",
+      "question": "What is the exit load of the HDFC Small Cap Fund?",
+      "fact_type": "exit_load",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-small-cap",
+      "must_include": [
+        "1%"
+      ],
+      "answer_span": "Exit load of HDFC Small Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year."
+    },
+    {
+      "id": "q16",
+      "question": "What is the riskometer level of the HDFC Small Cap Fund?",
+      "fact_type": "riskometer",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-small-cap",
+      "must_include": [
+        "Moderately High"
+      ],
+      "answer_span": "Riskometer for HDFC Small Cap Fund Direct Growth: Moderately High."
+    },
+    {
+      "id": "q17",
+      "question": "What is the expense ratio of the HDFC Balanced Advantage Fund?",
+      "fact_type": "expense_ratio",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
+      "expected_source_id": "hdfc-balanced-adv",
+      "must_include": [
+        "0.78"
+      ],
+      "answer_span": "Expense ratio of HDFC Balanced Advantage Fund Direct Growth is 0.78% (base expense ratio 0.64%)"
+    },
+    {
+      "id": "q18",
+      "question": "What is the exit load structure of the HDFC Balanced Advantage Fund?",
+      "fact_type": "exit_load",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
+      "expected_source_id": "hdfc-balanced-adv",
+      "must_include": [
+        "15%",
+        "1%"
+      ],
+      "answer_span": "Exit Load for units in excess of 15% of the investment,1% will be charged for redemption within 1 year."
+    },
+    {
+      "id": "q19",
+      "question": "What benchmark does the HDFC Balanced Advantage Fund track?",
+      "fact_type": "benchmark",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
+      "expected_source_id": "hdfc-balanced-adv",
+      "must_include": [
+        "NIFTY 50 Hybrid Composite"
+      ],
+      "answer_span": "Benchmark for HDFC Balanced Advantage Fund Direct Growth: NIFTY 50 Hybrid Composite Debt 50:50 Index."
+    },
+    {
+      "id": "q20",
+      "question": "What is the minimum lump sum for the HDFC Balanced Advantage Fund?",
+      "fact_type": "minimum_lumpsum",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
+      "expected_source_id": "hdfc-balanced-adv",
+      "must_include": [
+        "Rs 100"
+      ],
+      "answer_span": "Minimum lump sum investment for HDFC Balanced Advantage Fund Direct Growth is Rs 100."
+    },
+    {
+      "id": "q21",
+      "question": "Who manages the HDFC Large Cap Fund?",
+      "fact_type": "fund_manager",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "expected_source_id": "hdfc-large-cap",
+      "must_include": [
+        "Rahul Baijal",
+        "Dhruv Muchhal"
+      ],
+      "answer_span": "Fund managers of HDFC Large Cap Fund Direct Growth: Rahul Baijal, Dhruv Muchhal."
+    },
+    {
+      "id": "q22",
+      "question": "Who is the fund manager for HDFC ELSS Tax Saver Fund?",
+      "fact_type": "fund_manager",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+      "expected_source_id": "hdfc-elss",
+      "must_include": [
+        "Amar Kalkundrikar"
+      ],
+      "answer_span": "Fund managers of HDFC ELSS Tax Saver Fund Direct Plan Growth: Amar Kalkundrikar, Dhruv Muchhal."
+    },
+    {
+      "id": "q23",
+      "question": "Who manages the HDFC Balanced Advantage Fund?",
+      "fact_type": "fund_manager",
+      "expected_url": "https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth",
+      "expected_source_id": "hdfc-balanced-adv",
+      "must_include": [
+        "Anil Bamboli",
+        "Ihab Dalwai"
+      ],
+      "answer_span": "Fund managers of HDFC Balanced Advantage Fund Direct Growth: Anil Bamboli, Arun Agarwal, Dhruv Muchhal, Nandita Menezes, Gopal Agrawal, Ihab Dalwai."
+    }
+  ]
 }

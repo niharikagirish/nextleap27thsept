@@ -17,6 +17,7 @@ import inspect
 import re
 
 from app.chat import ERROR_ADVICE, ERROR_HEADLINE, render
+from app.disclaimers import LAST_UPDATED_LABEL
 from app.models import Answer
 
 # What Groq actually returns for a model that does not exist. Used verbatim
@@ -136,7 +137,10 @@ def test_factual_answer_keeps_its_sources_and_disclaimer() -> None:
     assert "The exit load is 1%" in out
     assert "Sources:" in out
     assert "groww.in" in out
-    assert "Last updated" in out
+    # Asserted against the constant, not a literal, so relabelling the freshness
+    # line cannot silently stop testing that it is rendered at all.
+    assert LAST_UPDATED_LABEL in out
+    assert "2026-09-27T09:41:53Z" in out
     assert "No investment advice" in out
     assert ERROR_HEADLINE not in out
 

@@ -157,6 +157,166 @@ def test_nil_exit_load_is_stated_explicitly():
     assert "Exit load of X: Nil." in "\n".join(lines)
 
 
+# --------------------------------------------------------------------------- #
+# Fund manager roster — regression for the stale-scalar bug
+# --------------------------------------------------------------------------- #
+#
+# `mfServerSideData.fund_manager` is a single name Groww stopped maintaining. On
+# four of the five corpus pages it names a manager who has left the fund, and on
+# the fifth it omits a co-manager. The authoritative roster is
+# `fund_manager_details`. These tests pin the fix so the scalar cannot creep back.
+
+# Roster observed on the live pages 2026-09-27, including the stale scalar the
+# page *also* carries, so a regression to the scalar is visible in the diff.
+OBSERVED_ROSTERS: dict[str, tuple[str, list[str]]] = {
+    "hdfc-large-cap": (
+        "Prashant Jain",
+        ["Rahul Baijal", "Dhruv Muchhal"],
+    ),
+    "hdfc-equity": (
+        "Prashant Jain",
+        ["Dhruv Muchhal", "Amit Ganatra"],
+    ),
+    "hdfc-elss": (
+        "Vinay Kulkarni",
+        ["Amar Kalkundrikar", "Dhruv Muchhal"],
+    ),
+    "hdfc-small-cap": (
+        "Chirag Setalvad",
+        ["Dhruv Muchhal", "Chirag Setalvad"],
+    ),
+    "hdfc-balanced-adv": (
+        "Srinivas Rao Ravuri",
+        [
+            "Anil Bamboli", "Arun Agarwal", "Dhruv Muchhal",
+            "Nandita Menezes", "Gopal Agrawal", "Ihab Dalwai",
+        ],
+    ),
+}
+
+
+def _mf_with_details(scheme_name: str, stale_scalar: str, details: list[dict]) -> dict:
+    return {
+        "scheme_name": scheme_name,
+        "exit_load": None,
+        "lock_in": None,
+        "fund_manager": stale_scalar,
+        "fund_manager_details": details,
+    }
+
+
+def test_fund_manager_comes_from_details_not_the_stale_scalar():
+    mf = _mf_with_details(
+        "HDFC Large Cap Fund Direct Growth",
+        "Prashant Jain",
+        [{"person_name": "Rahul Baijal", "funds_managed": [
+            {"scheme_name": "HDFC Large Cap Fund Direct Growth"}]}],
+    )
+    lines = loader._render_facts(mf)
+    joined = "\n".join(lines)
+
+    assert "Fund manager of HDFC Large Cap Fund Direct Growth: Rahul Baijal." in joined
+    assert "Prashant Jain" not in joined
+
+
+def test_fund_manager_roster_is_joined_and_pluralised():
+    mf = _mf_with_details(
+        "HDFC Small Cap Fund Direct Growth",
+        "Chirag Setalvad",
+        [
+            {"person_name": "Dhruv Muchhal", "funds_managed": [
+                {"scheme_name": "HDFC Small Cap Fund Direct Growth"}]},
+            {"person_name": "Chirag Setalvad", "funds_managed": [
+                {"scheme_name": "HDFC Small Cap Fund Direct Growth"}]},
+        ],
+    )
+    joined = "\n".join(loader._render_facts(mf))
+
+    # Both managers, in page order — the scalar listed only one of the two.
+    assert (
+        "Fund managers of HDFC Small Cap Fund Direct Growth: "
+        "Dhruv Muchhal, Chirag Setalvad." in joined
+    )
+
+
+def test_fund_manager_excludes_people_managing_only_a_sibling_scheme():
+    """Dhruv Muchhal appears on every HDFC page; a page's detail list also
+    contains people who manage a *different* scheme. Those must not be listed."""
+    mf = _mf_with_details(
+        "HDFC Large Cap Fund Direct Growth",
+        "Prashant Jain",
+        [
+            {"person_name": "Rahul Baijal", "funds_managed": [
+                {"scheme_name": "HDFC Large Cap Fund Direct Growth"}]},
+            # Manages an ELSS scheme, not this one:
+            {"person_name": "Amar Kalkundrikar", "funds_managed": [
+                {"scheme_name": "HDFC ELSS Tax Saver Fund Direct Growth"}]},
+        ],
+    )
+    joined = "\n".join(loader._render_facts(mf))
+
+    assert "Rahul Baijal" in joined
+    assert "Amar Kalkundrikar" not in joined
+
+
+def test_fund_manager_entry_without_scheme_list_is_kept():
+    """An entry that carries no `funds_managed` cannot be disproved, so it is
+    kept rather than silently dropping a real manager."""
+    mf = _mf_with_details(
+        "HDFC Large Cap Fund Direct Growth", "Prashant Jain",
+        [{"person_name": "Rahul Baijal"}],
+    )
+    assert "Rahul Baijal" in "\n".join(loader._render_facts(mf))
+
+
+def test_fund_manager_falls_back_to_scalar_when_details_absent():
+    """A future page that drops the list degrades to the old behaviour rather
+    than to no answer at all."""
+    joined = "\n".join(loader._render_facts({
+        "scheme_name": "HDFC Test Fund Direct Growth",
+        "exit_load": None, "lock_in": None,
+        "fund_manager": "Test Manager",
+    }))
+    assert "Fund manager of HDFC Test Fund Direct Growth: Test Manager." in joined
+
+
+def test_fund_manager_line_is_omitted_when_nothing_is_known():
+    joined = "\n".join(loader._render_facts({
+        "scheme_name": "HDFC Test Fund Direct Growth", "exit_load": None, "lock_in": None,
+    }))
+    assert "Fund manager" not in joined
+
+
+def test_fund_manager_roster_matches_the_committed_corpus():
+    """The committed corpus must carry the current roster, not the stale scalar.
+
+    This is the test that fails if the artifacts are rebuilt from unfixed code,
+    and it needs no network because it reads artifacts/raw_docs.jsonl.
+    """
+    expected = {
+        slug: names for slug, (_stale, names) in OBSERVED_ROSTERS.items()
+    }
+    for record in _read_raw_docs():
+        slug = record["source_id"]
+        if slug not in expected:
+            continue
+        text = record["text"]
+        for name in expected[slug]:
+            assert name in text, f"{slug}: corpus is missing manager {name!r}"
+        stale = OBSERVED_ROSTERS[slug][0]
+        if stale not in {n for n in expected[slug]}:
+            assert stale not in text, (
+                f"{slug}: corpus still carries the stale scalar {stale!r}"
+            )
+
+
+def _read_raw_docs() -> list[dict]:
+    from app.config import SETTINGS
+
+    path = SETTINGS.path("loading.raw_docs_path", "artifacts/raw_docs.jsonl")
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
 def test_extract_rejects_empty_html():
     with pytest.raises(loader.ExtractionError):
         loader.extract("<html><body></body></html>")

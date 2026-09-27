@@ -8,11 +8,15 @@
 address = "0.0.0.0"
 headless = true
 port = 8501
-# Render terminates TLS at its proxy and forwards to the container over plain
-# HTTP, so the browser-facing origin is not the same as the server's origin.
-# Streamlit's cross-origin checks have to be relaxed for that to work.
-enableCORS = false
 maxUploadSize = 5
+
+# NOTE: `enableCORS = false` is deliberately NOT set. Streamlit treats it as
+# incompatible with `enableXsrfProtection = true` and silently overrides it back
+# to true, printing a warning at startup — so writing it here would be a comment
+# that lies. Render proxies the app at the same origin and path, so Streamlit's
+# defaults work unchanged. If a CSRF error ever appears behind a proxy, the
+# documented fix is to set `enableXsrfProtection = false` (not CORS) so the two
+# agree.
 
 [browser]
 gatherUsageStats = false

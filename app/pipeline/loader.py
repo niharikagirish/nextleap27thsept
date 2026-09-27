@@ -351,6 +351,66 @@ def _document_links(mf: dict[str, Any]) -> list[tuple[str, str]]:
     return links
 
 
+def _fund_manager_names(mf: dict[str, Any]) -> list[str]:
+    """Return the fund manager roster for this scheme, in page order.
+
+    WHY NOT THE SCALAR
+    ------------------
+    ``mfServerSideData.fund_manager`` is a single name that Groww stopped
+    maintaining. Verified against all five corpus pages on 2026-09-27: on four of
+    them it names someone no longer on the fund (Large Cap and Flexi Cap both say
+    "Prashant Jain"; ELSS says "Vinay Kulkarni"; Balanced Advantage says
+    "Srinivas Rao Ravuri"), and on the fifth it is merely incomplete (Small Cap
+    lists only Chirag Setalvad, omitting co-manager Dhruv Muchhal). The
+    authoritative roster is ``fund_manager_details``, so that is what is read.
+
+    WHY THE ``funds_managed`` FILTER
+    --------------------------------
+    Each detail entry lists the schemes that person manages, and one manager
+    (Dhruv Muchhal) appears on every page in the corpus. A page's detail list
+    therefore also contains people who manage a *sibling* HDFC scheme rather
+    than this one. Entries are kept only when their ``funds_managed`` names this
+    scheme, or when the entry carries no scheme list at all.
+
+    The stale scalar is used only if the page omits the list entirely, so a
+    future page that drops the field degrades to the old behaviour rather than to
+    no answer.
+    """
+    details = mf.get("fund_manager_details")
+    if not isinstance(details, list) or not details:
+        scalar = str(mf.get("fund_manager") or "").strip()
+        return [scalar] if scalar else []
+
+    target = str(mf.get("scheme_name") or "").strip().lower()
+    matched: list[str] = []
+    unmatched: list[str] = []
+    for entry in details:
+        if not isinstance(entry, dict):
+            continue
+        person = str(entry.get("person_name") or "").strip()
+        if not person or person in matched or person in unmatched:
+            continue
+        managed = entry.get("funds_managed")
+        schemes = (
+            [
+                str(f.get("scheme_name") or "").strip().lower()
+                for f in managed
+                if isinstance(f, dict)
+            ]
+            if isinstance(managed, list)
+            else []
+        )
+        if schemes and target and target not in schemes:
+            unmatched.append(person)
+        else:
+            matched.append(person)
+
+    # Prefer the scheme-filtered set; if the page's scheme naming has drifted so
+    # that nothing matches, fall back to every name it lists rather than to the
+    # known-stale scalar.
+    return matched or unmatched
+
+
 def _render_facts(mf: dict[str, Any]) -> list[str]:
     """Render the flat mfServerSideData object as labelled, self-contained facts.
 
@@ -426,9 +486,16 @@ def _render_facts(mf: dict[str, Any]) -> list[str]:
     for label, url in _document_links(mf):
         lines.append(f"Official documents for {name} - {label}: {url}")
 
+    launch = mf.get("launch_date")
+    if launch not in (None, "", "None"):
+        lines.append(f"Launch date of {name}: {launch}.")
+
+    managers = _fund_manager_names(mf)
+    if managers:
+        noun = "Fund managers" if len(managers) > 1 else "Fund manager"
+        lines.append(f"{noun} of {name}: {', '.join(managers)}.")
+
     for key, label in (
-        ("launch_date", "Launch date"),
-        ("fund_manager", "Fund manager"),
         ("registrar_agent", "Registrar and transfer agent"),
         ("portfolio_turnover", "Portfolio turnover ratio"),
         ("face_value", "Face value"),

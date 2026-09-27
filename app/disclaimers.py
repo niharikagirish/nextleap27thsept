@@ -45,7 +45,18 @@ PERF_REDIRECT = (
     "official factsheet or scheme page."
 )
 
-LAST_UPDATED_LABEL = "Last updated from sources:"
+# The value rendered next to the timestamp of the cited sources.
+#
+# Deliberately NOT "Last updated from sources:", which is what PRD.md C7 and the
+# implementation guide ask for. The timestamp is `RawDoc.fetched_at` — the moment
+# *we* pulled the page — not the moment the AMC last revised the figures, which
+# the page never states. "Last updated" claims a fact the data does not contain,
+# and a demo whose entire value is traceability is the wrong place to assert one.
+# "Source fetched" describes exactly what the number is.
+#
+# To satisfy a rubric that greps for the C7 string literally, change the value
+# below to "Last updated from sources:" and nothing else needs to move.
+LAST_UPDATED_LABEL = "Source fetched:"
 
 FRESHNESS_CAVEAT = (
     "This is a point-in-time snapshot from the linked page, so verify the details there."

@@ -39,14 +39,14 @@ Two front ends share one pipeline entry point, `app.pipeline.orchestrator.answer
 
 ## Measured results
 
-Retrieval is measured against a 20-question gold set (`eval/golden.json`) by
+Retrieval is measured against a 23-question gold set (`eval/golden.json`) by
 `python -m app.eval_retrieval --strict`. A "hit" means the top-k chunk from the
 correct source contains the verbatim `answer_span` — so a hit cannot be produced
 by the LLM writing a plausible sentence.
 
 | metric | value |
 |--------|------:|
-| hit@1 | 0.750 |
+| hit@1 | 0.739 |
 | hit@3 | 1.000 |
 | hit@5 | 1.000 |
 | hit@6 | 1.000 |
@@ -54,16 +54,16 @@ by the LLM writing a plausible sentence.
 | scheme@3 | 1.000 |
 | scheme@5 | 1.000 |
 | scheme@6 | 1.000 |
-| MRR | 0.875 |
+| MRR | 0.862 |
 
-Corpus: 5 documents, 11,739 words, 146 chunks, **0** token-budget violations,
+Corpus: 5 documents, 11,756 words, 146 chunks, **0** token-budget violations,
 p95 218 word-pieces against a 256 cap. Report: `docs/retrieval_eval.md`.
 
-Test suite: **417 passing** (`python -m pytest`).
+Test suite: **427 passing** (`python -m pytest`).
 
-`hit@1` of 0.750 with `scheme@1` of 1.000 is the interesting shape: the correct
-page is always the top result, and the 5 misses are chunk-boundary cases where
-the gold sentence is real and present in the document but not inside any single
+`hit@1` of 0.739 with `scheme@1` of 1.000 is the interesting shape: the correct
+page is always the top result, and the misses are chunk-boundary cases where the
+gold sentence is real and present in the document but not inside any single
 retrieved chunk. They are chunking artefacts, not retrieval failures.
 
 ## Setup
@@ -152,7 +152,9 @@ Two deployment details that are easy to get wrong:
 
 - **The build must build the index.** A fresh clone has no `chroma_db/`. Skip
   the ingest step and the app serves "the retrieval index is empty" to every
-  visitor while looking otherwise healthy.
+  visitor while looking otherwise healthy. The build passes `--reset` so a
+  rebuild never inherits a stale HNSW index — that failure otherwise surfaces
+  much later as an opaque hnswlib error rather than as a build failure.
 - **The container must bind `0.0.0.0`.** `.streamlit/config.toml` sets this, and
   the start command passes it too. Binding localhost makes the deploy refuse
   every connection.
@@ -161,23 +163,43 @@ The Blueprint uses the **starter** plan deliberately. The free plan's 512 MB
 ceiling is tight against torch + the MiniLM model + chromadb, and running out of
 it presents as a random crash rather than a clear error.
 
-## Known limits
+## Known limits and deliberate deviations
 
 Stated plainly, because a demo that hides them is worse than useless.
 
-- **Fund manager names are currently stale.** The loader reads the scalar
-  `fundManager` field from the page's embedded JSON, but Groww's current pages
-  keep the roster in `fundManagerDetails`. The names are present on the page and
-  reachable; the extractor picks the wrong one. Answers about who manages a fund
-  are wrong today. Tracked as the next fix.
+### Deviations from the spec
+
+Three places where the code intentionally does not match the written brief. Each
+is a one-line revert if a rubric requires the literal spec behaviour.
+
+1. **The freshness label reads `Source fetched:`, not `Last updated from
+   sources:`** (PRD.md C7). The timestamp is `RawDoc.fetched_at` — when *we*
+   pulled the page — not when the AMC last revised the figures, which the page
+   never states. "Last updated" asserts a fact the data does not contain. Revert:
+   change the value of `LAST_UPDATED_LABEL` in `app/disclaimers.py`.
+2. **The gold set has 23 questions, not the 20 of FR-05.** The 20 are all still
+   present and still checked; three were added (`q21`-`q23`) to cover
+   `fund_manager` at the retrieval layer. `tests/test_chunker.py` now asserts the
+   20-question *core* rather than an exact total.
+3. **The `fund_manager` fact type is extracted, though it is not one of the seven
+   fact types the brief lists.** It is on every page and users ask for it, so
+   dropping it would have been a worse product.
+
+### Limits
+
 - The five pages are a snapshot. `artifacts/raw_docs.jsonl` records the fetch
-  timestamp, and the UI shows it, so a stale answer is identifiable.
+  timestamp, and the UI shows it as `Source fetched`, so a stale answer is
+  identifiable.
 - Retrieval is dense-only. There is no BM25 leg, so an exact-match question
   about an unusual token can rank below paraphrased ones.
 - The sentence chunker is naive; the p95 is 218 of a 256 token budget, so
   gold spans that straddle a boundary are unreachable by design.
 - The injection guard is exercised only on inputs the intent router lets
   through; an out-of-topic question is rejected by the router, not the guard.
+- The "Additional page text" section is best-effort `trafilatura` output and does
+  carry return figures from the pages' performance tables. The Phase 6 output
+  guard is what stops the model from stating them, and C4 is enforced on the
+  extracted facts rather than on this trailing section.
 
 ## Repository layout
 
@@ -195,11 +217,11 @@ app/
   pipeline/          loader, chunker, embedder, store, retriever,
                      prompt, generator, validators, orchestrator
 artifacts/           raw_docs.jsonl, clean_chunks.jsonl, embeddings.json
-eval/golden.json     20-question retrieval gold set
+eval/golden.json     23-question retrieval gold set
 docs/                implementation.md, retrieval_eval.md
 render.yaml          Render Blueprint
 scripts/             build scripts
-tests/               417 tests
+tests/               427 tests
 ```
 
 The `artifacts/*.jsonl` files are committed deliberately: a reviewer can verify

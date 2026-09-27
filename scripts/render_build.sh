@@ -25,7 +25,13 @@ echo "==> Installing project requirements"
 pip install --no-cache-dir -r requirements.txt
 
 echo "==> Building the retrieval index (offline replay, no network)"
-python -m app.ingest --stage all --offline
+# --reset drops and recreates the collection. Without it, an upsert into an
+# existing HNSW index can leave stale links behind, and the failure surfaces
+# later as a query-time
+#   RuntimeError: Cannot return the results in a contigious 2D array
+# from inside hnswlib — long after the build looked like it succeeded.
+# A clean build must start from a clean index.
+python -m app.ingest --stage all --offline --reset
 
 echo "==> Pre-warming the embedding model into the image"
 # Pulls all-MiniLM-L6-v2 into the build image so the first user request does not

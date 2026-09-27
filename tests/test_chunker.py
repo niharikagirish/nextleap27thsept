@@ -424,14 +424,31 @@ def test_configured_chunker_emits_no_degenerate_fragments_on_real_corpus():
 
 def test_golden_set_shape():
     gold = load_golden()
-    assert len(gold) == 20, "FR-05 specifies 20 golden questions"
-    assert len({g.id for g in gold}) == 20
-    assert len({g.question for g in gold}) == 20
-    per_scheme = {}
-    for g in gold:
+
+    # FR-05 specifies a 20-question gold set, 4 per scheme. Those 20 are still
+    # required and are still checked individually below; the set may only grow, so
+    # the guarantee is expressed as "contains the 20" rather than "is exactly 20".
+    # 3 further questions (q21-q23) were added on 2026-09-27 to cover fund_manager
+    # after the stale-scalar fix, which would otherwise be untested at the
+    # retrieval layer.
+    ids = [g.id for g in gold]
+    required = [f"q{n:02d}" for n in range(1, 21)]
+    missing = [qid for qid in required if qid not in ids]
+    assert not missing, f"the FR-05 20-question core is incomplete: {missing}"
+    assert len(gold) >= 20, "FR-05 specifies at least 20 golden questions"
+
+    assert len(set(ids)) == len(ids), "gold ids must be unique"
+    assert len({g.question for g in gold}) == len(gold), "gold questions must be unique"
+
+    # The 4-per-scheme balance applies to the FR-05 core. Extra questions are
+    # allowed to be uneven, so they are counted separately.
+    core = [g for g in gold if g.id in set(required)]
+    per_scheme: dict[str, int] = {}
+    for g in core:
         per_scheme[g.expected_source_id] = per_scheme.get(g.expected_source_id, 0) + 1
     assert len(per_scheme) == 5, f"every scheme must be covered, got {per_scheme}"
     assert all(v == 4 for v in per_scheme.values()), per_scheme
+
     fact_types = {g.fact_type for g in gold}
     assert len(fact_types) >= 6, f"gold must span the fact types, got {fact_types}"
 
