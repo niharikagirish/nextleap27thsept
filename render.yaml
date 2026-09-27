@@ -27,7 +27,13 @@ services:
     # --- the three answers ------------------------------------------------ #
     rootDir: ""            # repository root
     buildCommand: bash scripts/render_build.sh
-    startCommand: streamlit run app/ui.py --server.address 0.0.0.0 --server.port $PORT
+    # `python -m streamlit`, NOT bare `streamlit`. A bare console script depends
+    # on pip having installed it into a bin directory that happens to be on the
+    # start command's PATH. On Render it is not, so the build succeeded and the
+    # service died with "streamlit: command not found" (exit 127). Invoking the
+    # module resolves through the same interpreter that pip installed into, so
+    # the two cannot disagree.
+    startCommand: python -m streamlit run app/ui.py --server.address 0.0.0.0 --server.port $PORT
     # ---------------------------------------------------------------------- #
 
     healthCheckPath: /_stcore/health

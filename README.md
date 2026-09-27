@@ -136,7 +136,7 @@ To configure it by hand instead, these are the three values:
 |-------|-------|
 | **Root Directory** | *(empty — repository root)* |
 | **Build Command** | `bash scripts/render_build.sh` |
-| **Start Command** | `streamlit run app/ui.py --server.address 0.0.0.0 --server.port $PORT` |
+| **Start Command** | `python -m streamlit run app/ui.py --server.address 0.0.0.0 --server.port $PORT` |
 
 Then set one environment variable in the Render dashboard:
 
