@@ -4,17 +4,26 @@ A retrieval-augmented Q&A assistant that answers questions about **five HDFC
 Mutual Fund pages on Groww**, with every sentence traceable back to a source URL
 and every answer carrying a fact-only disclaimer.
 
-The corpus is a closed, versioned allowlist. The assistant cannot browse the web
-at query time, cannot use general model knowledge, and cannot answer about any
-fund outside the five pages below.
+The corpus is a closed, versioned allowlist (`app/sources.py:ALLOWLIST`). The
+assistant cannot browse the web at query time, cannot use general model knowledge,
+and cannot answer about any fund outside the five pages below.
 
-| slug | scheme |
-|------|--------|
-| `hdfc-large-cap` | HDFC Large Cap Fund |
-| `hdfc-equity` | HDFC Flexi Cap Fund |
-| `hdfc-elss` | HDFC ELSS Tax Saver Fund |
-| `hdfc-small-cap` | HDFC Small Cap Fund |
-| `hdfc-balanced-adv` | HDFC Balanced Advantage Fund |
+## The five sources
+
+All five are HDFC Asset Management schemes, all **Direct-Growth**, all public
+scheme pages on Groww.
+
+| slug | scheme | category | words | source page |
+|------|--------|----------|------:|-------------|
+| `hdfc-large-cap` | HDFC Large Cap Fund | Large Cap | 1,349 | [groww.in/…/hdfc-large-cap-fund-direct-growth](https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth) |
+| `hdfc-equity` | HDFC Flexi Cap Fund | Flexi Cap | 1,764 | [groww.in/…/hdfc-equity-fund-direct-growth](https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth) |
+| `hdfc-elss` | HDFC ELSS Tax Saver Fund | ELSS | 1,471 | [groww.in/…/hdfc-elss-tax-saver-fund-direct-plan-growth](https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth) |
+| `hdfc-small-cap` | HDFC Small Cap Fund | Small Cap | 1,744 | [groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth](https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth) |
+| `hdfc-balanced-adv` | HDFC Balanced Advantage Fund | Balanced Advantage | 5,428 | [groww.in/…/hdfc-balanced-advantage-fund-direct-growth](https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth) |
+
+Plain URLs, fetch timestamps and HTTP status per source:
+[`data/sources.csv`](data/sources.csv). Fetched `2026-09-27T10:59:40Z`–`:45Z`, all
+HTTP 200, 11,756 words total.
 
 ## What it does
 
@@ -65,6 +74,73 @@ Test suite: **427 passing** (`python -m pytest`).
 page is always the top result, and the misses are chunk-boundary cases where the
 gold sentence is real and present in the document but not inside any single
 retrieved chunk. They are chunking artefacts, not retrieval failures.
+
+## Sample Q&A
+
+Excerpt from [`docs/sample_qa.md`](docs/sample_qa.md) — 9 queries covering cited
+answers, refusals and abstentions. Regenerate it with `python -m app.sample_qa`;
+answers are produced by the pipeline, not hand-written, so the file cannot drift
+from behaviour.
+
+**Q. What is the expense ratio of the HDFC Large Cap Fund?**
+> The expense ratio of HDFC Large Cap Fund Direct Growth is 1.03%, with a base
+> expense ratio of 0.84%.
+
+`factual` — cited to
+[HDFC Large Cap Fund](https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth)
+
+**Q. Who manages the HDFC Balanced Advantage Fund?**
+> The fund managers of HDFC Balanced Advantage Fund Direct Growth are Anil
+> Bamboli, Arun Agarwal, Dhruv Muchhal, Nandita Menezes, Gopal Agrawal, and Ihab
+> Dalwai.
+
+`factual` — cited to
+[HDFC Balanced Advantage Fund](https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth)
+
+**Q. What are the 1 year returns of the HDFC Large Cap Fund?**
+> I don't state or compare returns. For audited performance figures, please see
+> the official factsheet or scheme page.
+
+`perf_redirect` — returns are dropped at ingestion *and* refused at output.
+
+**Q. Should I invest in the HDFC Small Cap Fund?**
+> I'm a facts-only assistant, so I can't give investment advice or tell you
+> whether to buy, sell, or hold a scheme. …
+
+`refusal` — non-factual intent, declined before retrieval runs.
+
+**Q. What is the expense ratio of HDFC Parag Parag Fund?**
+> I could not find that in the official sources for these 5 HDFC schemes. Try
+> asking about expense ratio, exit load, minimum SIP, lock-in, riskometer,
+> benchmark, or how to download statements.
+
+`abstain` — not one of the five allowlisted schemes. The assistant must not
+answer it from a similar-sounding fund in the corpus.
+
+## Disclaimer
+
+Every answer carries this. The strings live once in
+[`app/disclaimers.py`](app/disclaimers.py) and are imported by the UI, the CLI
+and this README, so they cannot drift between surfaces.
+
+> **Facts-only. No investment advice.**
+>
+> This assistant answers objective questions about 5 HDFC mutual fund schemes using only
+> official public pages. It does not recommend, compare, or time any investment, and it does
+> not state or calculate returns. Figures are point-in-time snapshots - always verify against
+> the linked source page. For investment suitability, consult a SEBI-registered investment
+> advisor. Do not share PAN, Aadhaar, account numbers, OTPs, email addresses, or phone
+> numbers.
+
+Short form, rendered under every answer:
+
+```
+Facts-only. No investment advice.
+```
+
+Freshness is labelled `Source fetched:` rather than `Last updated from sources:` —
+the timestamp is when *we* pulled the page, not when the AMC last revised the
+figures. See deviation 1 below.
 
 ## Setup
 
@@ -212,13 +288,14 @@ app/
   ingest.py          load -> chunk -> embed -> store
   eval_retrieval.py  gold-set scoring, --strict gate
   retrieve_debug.py  retrieval only, no generation
+  sample_qa.py       regenerate docs/sample_qa.md from live answers
   guards/            intent, injection, PII
   llm/               backend abstraction: echo, free-tier, OpenAI-compatible
   pipeline/          loader, chunker, embedder, store, retriever,
                      prompt, generator, validators, orchestrator
 artifacts/           raw_docs.jsonl, clean_chunks.jsonl, embeddings.json
 eval/golden.json     23-question retrieval gold set
-docs/                implementation.md, retrieval_eval.md
+docs/                implementation.md, retrieval_eval.md, sample_qa.md
 render.yaml          Render Blueprint
 scripts/             build scripts
 tests/               427 tests
